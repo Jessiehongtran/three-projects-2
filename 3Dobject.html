@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<head>
+
+</head>
+<style>
+    body {
+        margin: 0
+    }
+</style>
+<body>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "../build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from './build/three.module.js';
+        import { RoomEnvironment } from './jsm/environments/RoomEnvironment.js';
+        import { GLTFLoader } from './jsm/loaders/GLTFLoader.js';
+        import { DRACOLoader } from './jsm/loaders/DRACOLoader.js';
+
+        let mixer 
+
+        const clock = new THREE.Clock();
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const pmremGenerator = new THREE.PMREMGenerator(renderer);
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xbfe3dd);
+        scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/js/libs/draco/');
+
+        const loader = new GLTFLoader();
+        loader.setDRACOLoader(dracoLoader);
+        loader.load('models/LittlestTokyo.glb', function(gltf){
+            const model = gltf.scene;
+            model.position.set(1,1,0);
+            model.scale.set(0.008, 0.008, 0.008);
+            scene.add(model);
+
+            mixer = new THREE.AnimationMixer(model);
+            mixer.clipAction(gltf.animations[0]).play();
+
+            animate()
+
+        }, undefined, function(e){
+            console.error(e)
+        })
+
+        camera.position.z = 6
+
+        function animate(){
+            requestAnimationFrame(animate);
+
+            const delta = clock.getDelta();
+
+            mixer.update(delta);
+
+            renderer.render(scene, camera);
+        }
+        
+       
+    </script>
+</body>
